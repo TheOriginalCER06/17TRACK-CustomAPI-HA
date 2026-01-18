@@ -1,0 +1,7 @@
+{
+  "name": "17TRACK Package Tracking",
+  "content_in_root": false,
+  "domain": "track17",
+  "documentation": "https://api.17track.net",
+  "iot_class": "cloud_polling"
+}

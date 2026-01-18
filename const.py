@@ -1,0 +1,8 @@
+DOMAIN = "track17"
+
+DEFAULT_SCAN_INTERVAL_HOURS = 24
+
+STORAGE_KEY = "track17_packages"
+STORAGE_VERSION = 1
+
+EVENT_DELIVERED = "track17_delivered"

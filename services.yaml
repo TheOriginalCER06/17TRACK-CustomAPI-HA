@@ -1,0 +1,23 @@
+add_package:
+  name: Add Package
+  fields:
+    tracking_number:
+      required: true
+      selector:
+        text:
+
+remove_package:
+  name: Remove Package
+  fields:
+    tracking_number:
+      required: true
+      selector:
+        text:
+
+refresh_package:
+  name: Refresh Package
+  fields:
+    tracking_number:
+      required: true
+      selector:
+        text:
