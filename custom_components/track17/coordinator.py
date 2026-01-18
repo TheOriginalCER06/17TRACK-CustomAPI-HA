@@ -33,25 +33,40 @@ class Track17Coordinator(DataUpdateCoordinator):
     async def async_save(self):
         await self.store.async_save(self.tracking_numbers)
 
+
     async def _async_update_data(self):
-        await self.async_load()
+        """Fetch data from 17TRACK and handle errors."""
+        results = {}
+        for number in self.tracking_numbers:
+            try:
+                data = await self.api.async_get_tracking(number)
 
-        try:
-            data = await self.api.fetch(self.tracking_numbers)
+                # Ensure data is a dict
+                if isinstance(data, str):
+                    import json
+                    try:
+                        data = json.loads(data)
+                    except json.JSONDecodeError:
+                        self.logger.error("17TRACK returned invalid JSON for %s: %s", number, data)
+                        continue
 
-            for number, info in data.items():
-                if info.get("status") == "Delivered" and number not in self._delivered_cache:
-                    self._delivered_cache.add(number)
-                    self.hass.bus.async_fire(
-                        EVENT_DELIVERED,
-                        {"tracking_number": number},
-                    )
+                if not isinstance(data, dict):
+                    self.logger.error("Unexpected data format for %s: %s", number, data)
+                    continue
 
-            return data
-        except Exception as err:
-            raise UpdateFailed(err)
+                results[number] = data
+
+            except Exception as e:
+                self.logger.error("Error fetching 17TRACK data: %s", e)
+        return results
+
 
     async def async_add_package(self, number):
+        data = await self.api.async_get_tracking(number)
+        if "error" in data:
+            self.logger.warning("Tracking number %s could not be fetched: %s", number, data["error"])
+            return False
+
         if not number or number in self.tracking_numbers:
             return False
         self.tracking_numbers.append(number)
