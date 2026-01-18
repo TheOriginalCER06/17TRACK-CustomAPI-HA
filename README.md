@@ -87,15 +87,27 @@ cards:
     entities:
       - entity: input_text.track17_new_package
         name: Tracking number
-
-  - type: button
+  - show_name: true
+    show_icon: true
+    type: button
     name: Add package
-    icon: mdi:package-variant
     tap_action:
       action: call-service
       service: track17.add_package
       service_data:
         tracking_number: "{{ states('input_text.track17_new_package') }}"
+  - type: markdown
+    title: 17TRACK Overview
+    content: >
+      {% set packages = state_attr('sensor.tracked_packages', 'packages') %} {%
+      if packages %} | Tracking Number | Carrier | Country | Last Event |
+      Delivered At | Link |
+      |-----------------|---------|---------|------------|--------------|------|
+      {% for pkg in packages %} {% set p = states('sensor.package_' ~ pkg) %} {%
+      set attr = state_attr('sensor.package_' ~ pkg) %} | {{
+      attr.tracking_number }} | {{ attr.carrier }} | {{ attr.country }} | {{
+      attr.last_event }} | {{ attr.delivered_at }} | [Link]({{ attr.url }}) | {%
+      endfor %} {% else %} No packages tracked. {% endif %}
 ```
 
 ## Automation Examples
