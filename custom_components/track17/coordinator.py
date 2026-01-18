@@ -113,6 +113,17 @@ class Track17Coordinator(DataUpdateCoordinator):
         """Add a package and request a refresh. Returns True if added."""
         if not number or number in self.tracking_numbers:
             return False
+
+        # Reject obvious template literals or UI-templating that were sent
+        # verbatim from Lovelace. This prevents sensors like
+        # `sensor.package_states_input_text_track17_new_package` being created
+        # when a template string (e.g. "{{ states('input_text...') }}") is
+        # accidentally passed as the tracking number.
+        if isinstance(number, str):
+            s = number.strip()
+            if (s.startswith("{{") and s.endswith("}}")) or "{{" in s or "}}" in s or "states(" in s:
+                self.logger.warning("Rejected template-like tracking number: %s", number)
+                return False
         data = await self.api.async_get_tracking(number)
         if isinstance(data, dict) and "error" in data:
             self.logger.warning("Cannot add %s: %s", number, data.get("error"))

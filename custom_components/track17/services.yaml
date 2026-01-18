@@ -25,3 +25,8 @@ refresh_package:
 refresh_all_packages:
   name: Refresh All Packages
   fields: {}
+
+add_package_from_helper:
+  name: Add Package From Helper
+  description: "Read the configured input_text helper and add the package value"
+  fields: {}

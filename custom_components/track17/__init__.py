@@ -23,7 +23,8 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
     await coordinator.async_config_entry_first_refresh()
 
     # Automatically create input_text helper if it doesn't exist
-    if DEFAULT_HELPER_ENTITY not in hass.states:
+    # hass.states is a StateMachine object; use `get` to check presence.
+    if hass.states.get(DEFAULT_HELPER_ENTITY) is None:
         await hass.services.async_call(
             "input_text",
             "create",
@@ -55,11 +56,27 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
         """Refresh all tracked packages on demand."""
         await coordinator.async_refresh_all_packages()
 
+    async def handle_add_from_helper(call):
+        """Read the input_text helper and add that package.
+
+        This service exists so Lovelace can call a stable service (no need
+        for a UI script). It templates the helper server-side and avoids the
+        problem where the UI sends the literal template text.
+        """
+        state = hass.states.get(DEFAULT_HELPER_ENTITY)
+        if not state:
+            return
+        number = state.state
+        added = await coordinator.async_add_package(number)
+        if added:
+            await hass.config_entries.async_reload(entry.entry_id)
+
     # Register services
     hass.services.async_register(DOMAIN, "add_package", handle_add_package)
     hass.services.async_register(DOMAIN, "remove_package", handle_remove_package)
     hass.services.async_register(DOMAIN, "refresh_package", handle_refresh_package)
     hass.services.async_register(DOMAIN, "refresh_all_packages", handle_refresh_all)
+    hass.services.async_register(DOMAIN, "add_package_from_helper", handle_add_from_helper)
 
     # Forward platforms
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
@@ -86,5 +103,7 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     hass.services.async_remove(DOMAIN, "add_package")
     hass.services.async_remove(DOMAIN, "remove_package")
     hass.services.async_remove(DOMAIN, "refresh_package")
+    hass.services.async_remove(DOMAIN, "refresh_all_packages")
+    hass.services.async_remove(DOMAIN, "add_package_from_helper")
 
     return unload_ok

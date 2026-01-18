@@ -93,22 +93,62 @@ cards:
     name: Add package
     tap_action:
       action: call-service
-      service: track17.add_package
-      service_data:
-        tracking_number: "{{ states('input_text.track17_new_package') }}"
+    # Call the built-in service which reads the input_text helper server-side
+    # and adds the package. This avoids the common Lovelace issue where the
+    # client sends the literal template string instead of its evaluated value.
+    service: track17.add_package_from_helper
   - type: markdown
     title: 17TRACK Overview
     content: >
-      {% set packages = state_attr('sensor.tracked_packages', 'packages') %} {%
-      if packages %} | Tracking Number | Carrier | Country | Last Event |
-      Delivered At | Link |
+      {% set packages = state_attr('sensor.track17_packages', 'packages') %}
+      {% if packages %}
+      | Tracking Number | Carrier | Country | Last Event | Delivered At | Link |
       |-----------------|---------|---------|------------|--------------|------|
-      {% for pkg in packages %} {% set p = states('sensor.package_' ~ pkg) %} {%
-      set attr = state_attr('sensor.package_' ~ pkg) %} | {{
-      attr.tracking_number }} | {{ attr.carrier }} | {{ attr.country }} | {{
-      attr.last_event }} | {{ attr.delivered_at }} | [Link]({{ attr.url }}) | {%
-      endfor %} {% else %} No packages tracked. {% endif %}
+      {% for pkg in packages %}
+      {% set attr = state_attr('sensor.track17_' ~ pkg, 'attributes') %}
+      {% if attr is not none %}
+      | {{ attr.tracking_number }} | {{ attr.carrier }} | {{ attr.country }} | {{ attr.last_event }} | {{ attr.delivered_at }} | [Link]({{ attr.url }}) |
+      {% else %}
+      | {{ pkg }} | (no data) | | | | |
+      {% endif %}
+      {% endfor %}
+      {% else %}
+      No packages tracked.
+      {% endif %}
 ```
+
+Add this helper script to your Home Assistant `scripts.yaml` (or create it
+from the Scripts UI). The script templates the `input_text` value server-side
+and calls the integration's `add_package` service correctly:
+
+```yaml
+track17_add_package:
+  alias: "17TRACK: Add package from helper"
+  sequence:
+    - service: track17.add_package
+      data:
+        tracking_number: "{{ states('input_text.track17_new_package') }}"
+```
+
+If you've already added a package and see an entity like
+`sensor.package_states_input_text_track17_new_package`, that means the button
+sent the literal template rather than its evaluated value. To remove that bad
+entry you can either:
+
+- Use Settings → Devices & Services → Entities, search for the sensor by name
+  and delete it.
+- Or call the integration service to remove the package (Developer Tools →
+  Services) and paste the literal template as the tracking number, for example:
+
+```yaml
+service: track17.remove_package
+data:
+  tracking_number: "{{ states('input_text.track17_new_package') }}"
+```
+
+After removing the bad entry, use the Add Package button (which now calls the
+script) to add real tracking numbers from the helper input.
+
 
 ## Automation Examples
 
