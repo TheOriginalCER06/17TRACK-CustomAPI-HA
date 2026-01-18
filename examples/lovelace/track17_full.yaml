@@ -1,0 +1,87 @@
+title: 17TRACK Full
+path: track17-full
+cards:
+  - type: vertical-stack
+    cards:
+      - type: entities
+        title: Add / Remove Package
+        entities:
+          - entity: input_text.track17_new_package
+            name: Tracking number
+          - type: call-service
+            name: Add package
+            action_name: Add
+            service: track17.add_package_from_helper
+          - type: call-service
+            name: Remove package
+            action_name: Remove
+            service: track17.remove_package_from_helper
+
+      - type: horizontal-stack
+        cards:
+          - type: entities
+            title: Summary
+            entities:
+              - entity: sensor.track17_packages
+                name: Tracked packages
+              - entity: button.17track_refresh
+                name: Refresh all
+
+          - type: markdown
+            title: Quick Links
+            content: |
+              - [17TRACK web](https://t.17track.net)
+
+  - type: grid
+    title: Package tiles
+    columns: 3
+    square: false
+    cards: []
+
+  - type: 'custom:auto-entities'
+    card:
+      type: grid
+      columns: 3
+      square: false
+    filter:
+      include:
+        - domain: sensor
+          entity_id: sensor.track17_*
+    sort:
+      method: name
+    card:
+      type: 'custom:button-card'
+      entity: '${entity}'
+      name: '[[[ return entity.attributes.tracking_number || entity.entity_id ]]]'
+      show_state: true
+      show_icon: true
+      icon: mdi:truck-delivery
+      color_type: icon
+      styles:
+        card:
+          - padding: 10px
+          - border-radius: 8px
+        name:
+          - font-weight: 600
+        grid:
+          - grid-template-areas: '"i n" "s s"'
+          - grid-template-columns: 28px 1fr
+          - align-items: center
+      state:
+        - value: 'Delivered'
+          color: '#43A047'
+        - operator: default
+          color: '#1E88E5'
+      tap_action:
+        action: call-service
+        service: track17.remove_package
+        service_data:
+          tracking_number: "[[[ return entity.attributes.tracking_number ]]]"
+
+  - type: markdown
+    title: Notes
+    content: |
+      - Use the Add / Remove helper to manage packages quickly.
+      - For a dynamic per-item remove button, install HACS and the
+        `auto-entities` + `button-card` custom cards and use the snippet in
+        `examples/lovelace/track17.yaml`.

@@ -1,0 +1,17 @@
+# Example automation: show a persistent notification when a package is removed
+# Place this in your automations folder or import via the UI.
+
+alias: "17TRACK: Notify on package removal"
+trigger:
+  - platform: event
+    event_type: call_service
+    event_data:
+      domain: track17
+      service: remove_package
+condition: []
+action:
+  - service: persistent_notification.create
+    data:
+      title: "17TRACK — Package removed"
+      message: "Removed package: {{ trigger.event.data.service_data.tracking_number }}"
+mode: single

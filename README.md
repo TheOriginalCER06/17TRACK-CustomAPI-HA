@@ -97,6 +97,14 @@ cards:
     # and adds the package. This avoids the common Lovelace issue where the
     # client sends the literal template string instead of its evaluated value.
     service: track17.add_package_from_helper
+  - show_name: true
+    show_icon: true
+    type: button
+    name: Remove package
+    tap_action:
+      action: call-service
+      # Remove the package named in the helper using the server-side service.
+      service: track17.remove_package_from_helper
   - type: markdown
     title: 17TRACK Overview
     content: >
@@ -116,6 +124,79 @@ cards:
       No packages tracked.
       {% endif %}
 ```
+
+Per-package remove buttons (two approaches)
+------------------------------------------
+
+If you'd like a per-package remove control in your dashboard (a remove
+button next to each tracked package), here are two options: a simple script
+approach (no custom cards) and a dynamic approach using HACS custom cards.
+
+1) Simple script + manual rows
+
+   - Add a small script that accepts a `tracking_number` variable and calls
+     the integration's removal service. Put this in `scripts.yaml` or create
+     it in the Scripts UI:
+
+   ```yaml
+   track17_remove_package:
+     alias: "17TRACK: Remove package"
+     sequence:
+       - service: track17.remove_package
+         data:
+           tracking_number: "{{ tracking_number }}"
+   ```
+
+   - Then in Lovelace, add an `entities` card and for each package row add a
+     manual `entity` entry with a `tap_action` that calls the script and
+     passes the package string. This is easy for a small or static set of
+     tracked packages.
+
+2) Dynamic list with per-item buttons (recommended for many packages)
+
+   - Install the HACS custom cards `auto-entities` and `button-card`.
+
+   - The following Lovelace snippet uses `auto-entities` to discover
+     `sensor.track17_*` sensors and renders each as a `button-card` with a
+     remove action. The `button-card` JS template extracts the tracked
+     number from the sensor attributes and passes it to the `remove_package`
+     service.
+
+   ```yaml
+   type: 'custom:auto-entities'
+   card:
+     type: grid
+     columns: 1
+   filter:
+     include:
+       - domain: sensor
+         entity_id: sensor.track17_*
+   sort:
+     method: name
+   card:
+     type: 'custom:button-card'
+     entity: '${entity}'
+     name: '[[[ return entity.attributes.tracking_number || entity.entity_id ]]]'
+     show_state: true
+     show_icon: false
+     tap_action:
+       action: call-service
+       service: track17.remove_package
+       service_data:
+         tracking_number: "[[[ return entity.attributes.tracking_number ]]]"
+   ```
+
+   Notes:
+   - `auto-entities` automatically builds one child card per matching entity.
+     The `card:` block controls how each entity is rendered.
+   - `button-card` uses JavaScript templating (the `[[[ ... ]]]` syntax) to
+     access the `entity` object and its attributes. We call the integration
+     service and pass `entity.attributes.tracking_number` as the argument.
+   - This approach requires HACS to install the custom cards but provides a
+     fully dynamic UI that updates when packages are added or removed.
+
+Pick the approach that fits your setup — the dynamic `auto-entities` +
+`button-card` approach works best for larger or frequently-changing lists.
 
 Add this helper script to your Home Assistant `scripts.yaml` (or create it
 from the Scripts UI). The script templates the `input_text` value server-side
@@ -193,6 +274,25 @@ automation:
           - mon
     action:
       - service: track17.remove_delivered_packages
+
+Included example files
+----------------------
+
+This repository includes a couple of ready-made examples you can copy into
+your Home Assistant config:
+
+- `examples/lovelace/track17.yaml` — a small Lovelace view with the helper
+  input and Add / Remove buttons. It also contains a commented dynamic
+  `auto-entities` + `button-card` example (requires HACS) for per-item remove
+  buttons.
+- `examples/automations/track17_remove_notify.yaml` — an example automation
+  that creates a persistent notification when the `track17.remove_package`
+  service is called (useful as a demo confirmation of remove actions).
+- `examples/lovelace/track17_full.yaml` — a fully fleshed-out Lovelace view
+  with tiles, icons and a layout you can copy into a Raw Lovelace view.
+
+Copy the files into the corresponding folders in your Home Assistant config
+or open them and paste into the UI editors.
 ```
 
 
