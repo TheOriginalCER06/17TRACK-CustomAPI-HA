@@ -7,4 +7,4 @@ STORAGE_VERSION = 1
 
 EVENT_DELIVERED = "track17_delivered"
 
-VERSION = "1.1.1"
+VERSION = "1.1.0"
