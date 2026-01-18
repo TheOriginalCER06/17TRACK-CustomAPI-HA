@@ -14,9 +14,17 @@ class Track17RefreshButton(CoordinatorEntity, ButtonEntity):
 
     async def async_press(self) -> None:
         """Handle the button press."""
-        await self.coordinator.async_refresh()
-    async def async_setup_entry(hass, entry, async_add_entities):
-        """Set up the 17TRACK button platform."""
-        coordinator = hass.data[DOMAIN][entry.entry_id]
-        async_add_entities([Track17RefreshButton(coordinator)])
+        # Use the coordinator helper which triggers a refresh for all
+        # packages. Coordinator exposes async_refresh_all_packages.
+        if hasattr(self.coordinator, "async_refresh_all_packages"):
+            await self.coordinator.async_refresh_all_packages()
+        else:
+            # Fallback to requesting a refresh
+            await self.coordinator.async_request_refresh()
+
+
+async def async_setup_entry(hass, entry, async_add_entities):
+    """Set up the 17TRACK button platform."""
+    coordinator = hass.data[DOMAIN][entry.entry_id]
+    async_add_entities([Track17RefreshButton(coordinator)])
 

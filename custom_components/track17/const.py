@@ -7,4 +7,10 @@ STORAGE_VERSION = 1
 
 EVENT_DELIVERED = "track17_delivered"
 
-VERSION = "1.1.3"
+VERSION = "1.1.4"
+API_URL = "https://api.17track.net/track/v2.4/"
+
+DEFAULT_HEADERS = {
+    "Content-Type": "application/json",
+    "User-Agent": "HomeAssistant-Track17-Integration/1.1.4"
+}

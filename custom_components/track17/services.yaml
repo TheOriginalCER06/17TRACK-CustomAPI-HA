@@ -21,3 +21,7 @@ refresh_package:
       required: true
       selector:
         text:
+
+refresh_all_packages:
+  name: Refresh All Packages
+  fields: {}
