@@ -71,12 +71,28 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
         if added:
             await hass.config_entries.async_reload(entry.entry_id)
 
+    async def handle_remove_from_helper(call):
+        """Read the input_text helper and remove that package.
+
+        This mirrors `add_package_from_helper` but removes the package named
+        in the helper. Useful for Lovelace buttons that shouldn't send
+        client-side templates.
+        """
+        state = hass.states.get(DEFAULT_HELPER_ENTITY)
+        if not state:
+            return
+        number = state.state
+        removed = await coordinator.async_remove_package(number)
+        if removed:
+            await hass.config_entries.async_reload(entry.entry_id)
+
     # Register services
     hass.services.async_register(DOMAIN, "add_package", handle_add_package)
     hass.services.async_register(DOMAIN, "remove_package", handle_remove_package)
     hass.services.async_register(DOMAIN, "refresh_package", handle_refresh_package)
     hass.services.async_register(DOMAIN, "refresh_all_packages", handle_refresh_all)
     hass.services.async_register(DOMAIN, "add_package_from_helper", handle_add_from_helper)
+    hass.services.async_register(DOMAIN, "remove_package_from_helper", handle_remove_from_helper)
 
     # Forward platforms
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
@@ -105,5 +121,6 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     hass.services.async_remove(DOMAIN, "refresh_package")
     hass.services.async_remove(DOMAIN, "refresh_all_packages")
     hass.services.async_remove(DOMAIN, "add_package_from_helper")
+    hass.services.async_remove(DOMAIN, "remove_package_from_helper")
 
     return unload_ok
