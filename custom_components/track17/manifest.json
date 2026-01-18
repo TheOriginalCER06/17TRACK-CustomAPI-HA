@@ -1,7 +1,7 @@
 {
   "domain": "track17",
   "name": "17TRACK Package Tracking",
-  "version": "1.1.2",
+  "version": "1.1.3",
   "documentation": "https://api.17track.net",
   "config_flow": true,
   "iot_class": "cloud_polling"
