@@ -59,6 +59,7 @@ Create a helper:
 ```yaml
 - Type: Text
 - Entity ID: `input_text.track17_new_package`
+```
 
 Add this to your dashboard:
 
