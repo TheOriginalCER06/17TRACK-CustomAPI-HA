@@ -1,0 +1,72 @@
+# Example Lovelace view for 17TRACK integration
+# Copy/paste this into a Lovelace Raw config or use as a view file.
+# Requires the integration to be installed and configured.
+
+title: 17TRACK
+path: track17
+cards:
+  - type: entities
+    title: Add / Remove Package
+    entities:
+      - entity: input_text.track17_new_package
+        name: Tracking number
+      - type: call-service
+        name: Add package (from helper)
+        action_name: Add
+        service: track17.add_package_from_helper
+      - type: call-service
+        name: Remove package (from helper)
+        action_name: Remove
+        service: track17.remove_package_from_helper
+
+  - type: markdown
+    title: 17TRACK Overview (simple)
+    content: |
+      {% set packages = state_attr('sensor.track17_packages', 'packages') %}
+      {% if packages %}
+      | Tracking Number | Carrier | Country | Last Event | Delivered At | Link |
+      |-----------------|---------|---------|------------|--------------|------|
+      {% for pkg in packages %}
+      {% set attr = state_attr('sensor.track17_' ~ pkg, 'attributes') %}
+      {% if attr is not none %}
+      | {{ attr.tracking_number }} | {{ attr.carrier }} | {{ attr.country }} | {{ attr.last_event }} | {{ attr.delivered_at }} | [Link]({{ attr.url }}) |
+      {% else %}
+      | {{ pkg }} | (no data) | | | | |
+      {% endif %}
+      {% endfor %}
+      {% else %}
+      No packages tracked.
+      {% endif %}
+
+  # Dynamic list (requires HACS custom cards: auto-entities + button-card)
+  # Uncomment this section if you have installed the required custom cards.
+
+  #- type: 'custom:auto-entities'
+  #  card:
+  #    type: grid
+  #    columns: 1
+  #  filter:
+  #    include:
+  #      - domain: sensor
+  #        entity_id: sensor.track17_*
+  #  sort:
+  #    method: name
+  #  card:
+  #    type: 'custom:button-card'
+  #    entity: '${entity}'
+  #    name: '[[[ return entity.attributes.tracking_number || entity.entity_id ]]]'
+  #    show_state: true
+  #    show_icon: false
+  #    tap_action:
+  #      action: call-service
+  #      service: track17.remove_package
+  #      service_data:
+  #        tracking_number: "[[[ return entity.attributes.tracking_number ]]]"
+
+  - type: entities
+    title: Controls
+    entities:
+      - entity: button.17track_refresh
+        name: Refresh all
+      - entity: sensor.track17_packages
+        name: Tracked packages
