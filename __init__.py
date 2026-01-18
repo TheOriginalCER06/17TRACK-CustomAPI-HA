@@ -1,5 +1,6 @@
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
+from homeassistant.helpers import entity_platform
 from .const import DOMAIN
 from .coordinator import Track17Coordinator
 
@@ -13,10 +14,15 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
     hass.data[DOMAIN][entry.entry_id] = coordinator
 
     async def handle_add_package(call):
-        await coordinator.async_add_package(call.data["tracking_number"])
+        added = await coordinator.async_add_package(call.data["tracking_number"])
+        if added:
+            await hass.config_entries.async_reload(entry.entry_id)
 
     async def handle_remove_package(call):
-        await coordinator.async_remove_package(call.data["tracking_number"])
+        removed = await coordinator.async_remove_package(call.data["tracking_number"])
+        if removed:
+            await hass.config_entries.async_reload(entry.entry_id)
+
 
     async def handle_refresh_package(call):
         await coordinator.async_refresh_package(call.data["tracking_number"])

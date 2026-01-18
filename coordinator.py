@@ -1,6 +1,7 @@
 from datetime import timedelta
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 from homeassistant.helpers.storage import Store
+from homeassistant.helpers import entity_registry as er
 from .api import Track17Api
 import logging
 from .const import STORAGE_KEY, STORAGE_VERSION, EVENT_DELIVERED
@@ -61,8 +62,17 @@ class Track17Coordinator(DataUpdateCoordinator):
     async def async_remove_package(self, number):
         if number not in self.tracking_numbers:
             return False
+
         self.tracking_numbers.remove(number)
         await self.async_save()
+
+        # Remove entity from registry
+        registry = er.async_get(self.hass)
+        entity_id = f"sensor.package_{number.lower()}"
+
+        if entity := registry.async_get(entity_id):
+            registry.async_remove(entity.entity_id)
+
         await self.async_request_refresh()
         return True
 

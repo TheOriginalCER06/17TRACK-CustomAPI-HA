@@ -31,11 +31,32 @@ This integration was **AI GENERATED** with the assistance of a large language mo
 5. Enter your 17TRACK Security Key
 
 ---
+## Services
+
+### Add a package
+```yaml
+service: track17.add_package
+data:
+  tracking_number: LP123456789CN
+```
+### Remove a package
+```yaml
+service: track17.remove_package
+data:
+  tracking_number: LP123456789CN
+```
+### Refresh a package
+```yaml
+service: track17.refresh_package
+data:
+  tracking_number: LP123456789CN
+```
 
 ## Adding packages from the dashboard
 
 Create a helper:
 
+```yaml
 - Type: Text
 - Entity ID: `input_text.track17_new_package`
 
@@ -46,6 +67,16 @@ type: vertical-stack
 cards:
   - type: entities
     entities:
+      - entity: input_text.track17_new_package
+        name: Tracking number
+
+  - type: button
+    name: Add package
+    tap_action:
+      action: call-service
+      service: track17.add_package
+      service_data:
+        tracking_number: "{{ states('input_text.track17_new_package') }}"
       - entity: input_text.track17_new_package
         name: Tracking number
 
